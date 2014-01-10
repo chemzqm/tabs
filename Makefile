@@ -1,9 +1,9 @@
 
 build: components index.js tabs.css
-	@component-build --dev
+	@component-build
 
 components: component.json
-	@component-install --dev
+	@component-install
 
 clean:
 	rm -rf components build
