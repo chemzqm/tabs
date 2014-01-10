@@ -1,0 +1,47 @@
+ul.tabs-header {
+  padding: 0px;
+  margin: 0px;
+}
+
+ul.tabs-header:before,
+ul.tabs-header:after {
+  content: " ";
+  display:block;
+  height:0;
+  clear:both;
+  visibility:hidden;
+}
+
+ul.tabs-header li {
+  position: relative;
+  list-style: none;
+}
+
+ul.tabs-header .close {
+  text-decoration: none;
+  font-size: 16px;
+  margin-left: 15px;
+  visibility: hidden;
+}
+
+ul.tabs-header li:hover .close {
+  cursor: pointer;
+  color: #888;
+  visibility: visible;
+}
+
+ul.tabs-header li .close:hover {
+  color: black;
+}
+
+.tabs-body {
+  position: relative;
+}
+
+.tabs-body .hide {
+  display: none;
+}
+
+.tabs-body .active {
+  color: green;
+}
