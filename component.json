@@ -5,6 +5,7 @@
   "keywords": [
     "tabs"
   ],
+  "demo": "http://chemzqm.github.io/tabs/test/",
   "author": "chemzqm@gmail.com",
   "license": "MIT",
   "dependencies": {

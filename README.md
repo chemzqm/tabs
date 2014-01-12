@@ -1,7 +1,10 @@
 # tabs
 
+[demo](http://chemzqm.github.io/tabs/test/)
+
 Dynamic tabs component with add, remove and order support.
-If you just just want to convert tabs from static html, consider use [stagas/tabify](https://github.com/stagas/tabify).
+
+If you just want to convert tabs from static html, consider use [stagas/tabify](https://github.com/stagas/tabify).
 
 ## Install
 
@@ -46,7 +49,7 @@ Make the tab navs sortable
 
 Add a tab with title string and associate dom node.
 
-### .active(el|query)
+### .active(el | selector)
 
 Active the tab by css query(querySelector inside) or tab element.
 
