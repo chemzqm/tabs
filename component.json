@@ -13,7 +13,11 @@
     "component/domify": "*",
     "component/classes": "*",
     "component/event": "*",
+    "ianstormtaylor/create-event": "*",
     "chemzqm/sortable": "*"
+  },
+  "development": {
+    "component/assert": "*"
   },
   "scripts": [
     "index.js"

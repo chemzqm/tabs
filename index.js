@@ -80,6 +80,7 @@ Tabs.prototype.sortable = function() {
  */
 Tabs.prototype.add = function(title, node) {
   var tab = domify('<li>' + title + '</li>');
+  node = (typeof node === 'string') ? domify(node) : node;
   this.header.appendChild(tab);
   if (this._closable) {
     var close = domify('<a href="#" class="close">×</a>');
@@ -131,10 +132,10 @@ Tabs.prototype.onclick = function(e) {
     var target = li.__target;
     target.parentNode.removeChild(target);
     li.parentNode.removeChild(li);
+    if (this.body.childNodes.length === 0) return this.emit('empty');
     if (this._active !== li) return;
     if (prev) return this.active(prev);
     if (next) return this.active(next);
-    this.emit('empty');
   }
   else if (el.parentNode === this.header) {
     this.active(el);

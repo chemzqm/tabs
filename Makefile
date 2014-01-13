@@ -5,7 +5,13 @@ build: components index.js tabs.css
 components: component.json
 	@component-install
 
+test:
+	@component test phantom
+
+test-browser:
+	@component test browser
+
 clean:
 	rm -rf components build
 
-.PHONY: clean
+.PHONY: clean test test-browser
