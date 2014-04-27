@@ -1,5 +1,24 @@
 /*global describe,it*/
 
+if (window._phantom) {
+  // Patch since PhantomJS does not implement click() on HTMLElement. In some 
+  // cases we need to execute the native click on an element
+  if (!HTMLElement.prototype.click) {
+    HTMLElement.prototype.click = function() {
+      var ev = document.createEvent('MouseEvent');
+      ev.initMouseEvent(
+          'click',
+          /*bubble*/true, /*cancelable*/true,
+          window, null,
+          0, 0, 0, 0, /*coordinates*/
+          false, false, false, false, /*modifier keys*/
+          0/*button=left*/, null
+      );
+      this.dispatchEvent(ev);
+    };
+  }
+}
+
 var Tabs = require('tabs');
 var parentNode;
 var assert = require('assert');
