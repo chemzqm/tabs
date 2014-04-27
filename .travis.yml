@@ -1,8 +1,8 @@
 language: node_js
 install:
-  - alias npm="npm --registry=registry.npm.taobao.org --disturl=http://dist.cnpmjs.org"
-  - npm install -g component-test2@0.1.3
-  - npm install -g component
+  - npm install -g cnpm
+  - cnpm install -g component-test2@0.1.3
+  - cnpm install -g component
 script:
   - make
   - make test
