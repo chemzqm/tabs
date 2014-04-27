@@ -1,7 +1,7 @@
 language: node_js
 install:
   - npm install -g cnpm
-  - cnpm install -g component-test2@0.1.3
+  - cnpm install -g component-test2
   - cnpm install -g component
 script:
   - make
