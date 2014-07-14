@@ -1,39 +1,19 @@
-
 /**
- * Require the given path.
+ * Require the module at `name`.
  *
- * @param {String} path
+ * @param {String} name
  * @return {Object} exports
  * @api public
  */
 
-function require(path, parent, orig) {
-  var resolved = require.resolve(path);
+function require(name) {
+  var module = require.modules[name];
+  if (!module) throw new Error('failed to require "' + name + '"');
 
-  // lookup failed
-  if (null == resolved) {
-    orig = orig || path;
-    parent = parent || 'root';
-    var err = new Error('Failed to require "' + orig + '" from "' + parent + '"');
-    err.path = orig;
-    err.parent = parent;
-    err.require = true;
-    throw err;
-  }
-
-  var module = require.modules[resolved];
-
-  // perform real require()
-  // by invoking the module's
-  // registered function
-  if (!module._resolving && !module.exports) {
-    var mod = {};
-    mod.exports = {};
-    mod.client = mod.component = true;
-    module._resolving = true;
-    module.call(this, mod.exports, require.relative(resolved), mod);
-    delete module._resolving;
-    module.exports = mod.exports;
+  if (!('exports' in module) && typeof module.definition === 'function') {
+    module.client = module.component = true;
+    module.definition.call(this, module.exports = {}, module);
+    delete module.definition;
   }
 
   return module.exports;
@@ -46,160 +26,33 @@ function require(path, parent, orig) {
 require.modules = {};
 
 /**
- * Registered aliases.
- */
-
-require.aliases = {};
-
-/**
- * Resolve `path`.
+ * Register module at `name` with callback `definition`.
  *
- * Lookup:
- *
- *   - PATH/index.js
- *   - PATH.js
- *   - PATH
- *
- * @param {String} path
- * @return {String} path or null
- * @api private
- */
-
-require.resolve = function(path) {
-  if (path.charAt(0) === '/') path = path.slice(1);
-
-  var paths = [
-    path,
-    path + '.js',
-    path + '.json',
-    path + '/index.js',
-    path + '/index.json'
-  ];
-
-  for (var i = 0; i < paths.length; i++) {
-    var path = paths[i];
-    if (require.modules.hasOwnProperty(path)) return path;
-    if (require.aliases.hasOwnProperty(path)) return require.aliases[path];
-  }
-};
-
-/**
- * Normalize `path` relative to the current path.
- *
- * @param {String} curr
- * @param {String} path
- * @return {String}
- * @api private
- */
-
-require.normalize = function(curr, path) {
-  var segs = [];
-
-  if ('.' != path.charAt(0)) return path;
-
-  curr = curr.split('/');
-  path = path.split('/');
-
-  for (var i = 0; i < path.length; ++i) {
-    if ('..' == path[i]) {
-      curr.pop();
-    } else if ('.' != path[i] && '' != path[i]) {
-      segs.push(path[i]);
-    }
-  }
-
-  return curr.concat(segs).join('/');
-};
-
-/**
- * Register module at `path` with callback `definition`.
- *
- * @param {String} path
+ * @param {String} name
  * @param {Function} definition
  * @api private
  */
 
-require.register = function(path, definition) {
-  require.modules[path] = definition;
+require.register = function (name, definition) {
+  require.modules[name] = {
+    definition: definition
+  };
 };
 
 /**
- * Alias a module definition.
+ * Define a module's exports immediately with `exports`.
  *
- * @param {String} from
- * @param {String} to
+ * @param {String} name
+ * @param {Generic} exports
  * @api private
  */
 
-require.alias = function(from, to) {
-  if (!require.modules.hasOwnProperty(from)) {
-    throw new Error('Failed to alias "' + from + '", it does not exist');
-  }
-  require.aliases[to] = from;
-};
-
-/**
- * Return a require function relative to the `parent` path.
- *
- * @param {String} parent
- * @return {Function}
- * @api private
- */
-
-require.relative = function(parent) {
-  var p = require.normalize(parent, '..');
-
-  /**
-   * lastIndexOf helper.
-   */
-
-  function lastIndexOf(arr, obj) {
-    var i = arr.length;
-    while (i--) {
-      if (arr[i] === obj) return i;
-    }
-    return -1;
-  }
-
-  /**
-   * The relative require() itself.
-   */
-
-  function localRequire(path) {
-    var resolved = localRequire.resolve(path);
-    return require(resolved, parent, path);
-  }
-
-  /**
-   * Resolve relative to the parent.
-   */
-
-  localRequire.resolve = function(path) {
-    var c = path.charAt(0);
-    if ('/' == c) return path.slice(1);
-    if ('.' == c) return require.normalize(p, path);
-
-    // resolve deps by returning
-    // the dep in the nearest "deps"
-    // directory
-    var segs = parent.split('/');
-    var i = lastIndexOf(segs, 'deps') + 1;
-    if (!i) i = 0;
-    path = segs.slice(0, i + 1).join('/') + '/deps/' + path;
-    return path;
+require.define = function (name, exports) {
+  require.modules[name] = {
+    exports: exports
   };
-
-  /**
-   * Check if module is defined at `path`.
-   */
-
-  localRequire.exists = function(path) {
-    return require.modules.hasOwnProperty(localRequire.resolve(path));
-  };
-
-  return localRequire;
 };
-require.register("component-emitter/index.js", function(exports, require, module){
+require.register("component~emitter@1.1.3", function (exports, module) {
 
 /**
  * Expose `Emitter`.
@@ -366,7 +219,8 @@ Emitter.prototype.hasListeners = function(event){
 };
 
 });
-require.register("component-domify/index.js", function(exports, require, module){
+
+require.register("component~domify@1.2.2", function (exports, module) {
 
 /**
  * Expose `parse`.
@@ -416,12 +270,13 @@ map.rect = [1, '<svg xmlns="http://www.w3.org/2000/svg" version="1.1">','</svg>'
 
 function parse(html) {
   if ('string' != typeof html) throw new TypeError('String expected');
-
-  html = html.replace(/^\s+|\s+$/g, ''); // Remove leading/trailing whitespace
-
+  
   // tag name
   var m = /<([\w:]+)/.exec(html);
   if (!m) return document.createTextNode(html);
+
+  html = html.replace(/^\s+|\s+$/g, ''); // Remove leading/trailing whitespace
+
   var tag = m[1];
 
   // body support
@@ -455,7 +310,8 @@ function parse(html) {
 }
 
 });
-require.register("component-indexof/index.js", function(exports, require, module){
+
+require.register("component~indexof@0.0.3", function (exports, module) {
 module.exports = function(arr, obj){
   if (arr.indexOf) return arr.indexOf(obj);
   for (var i = 0; i < arr.length; ++i) {
@@ -464,12 +320,13 @@ module.exports = function(arr, obj){
   return -1;
 };
 });
-require.register("component-classes/index.js", function(exports, require, module){
+
+require.register("component~classes@1.2.1", function (exports, module) {
 /**
  * Module dependencies.
  */
 
-var index = require('indexof');
+var index = require("component~indexof@0.0.3");
 
 /**
  * Whitespace regexp.
@@ -579,26 +436,45 @@ ClassList.prototype.removeMatching = function(re){
 };
 
 /**
- * Toggle class `name`.
+ * Toggle class `name`, can force state via `force`.
+ *
+ * For browsers that support classList, but do not support `force` yet,
+ * the mistake will be detected and corrected.
  *
  * @param {String} name
+ * @param {Boolean} force
  * @return {ClassList}
  * @api public
  */
 
-ClassList.prototype.toggle = function(name){
+ClassList.prototype.toggle = function(name, force){
   // classList
   if (this.list) {
-    this.list.toggle(name);
+    if ("undefined" !== typeof force) {
+      if (force !== this.list.toggle(name, force)) {
+        this.list.toggle(name); // toggle again to correct
+      }
+    } else {
+      this.list.toggle(name);
+    }
     return this;
   }
 
   // fallback
-  if (this.has(name)) {
-    this.remove(name);
+  if ("undefined" !== typeof force) {
+    if (!force) {
+      this.remove(name);
+    } else {
+      this.add(name);
+    }
   } else {
-    this.add(name);
+    if (this.has(name)) {
+      this.remove(name);
+    } else {
+      this.add(name);
+    }
   }
+
   return this;
 };
 
@@ -632,7 +508,427 @@ ClassList.prototype.contains = function(name){
 };
 
 });
-require.register("component-event/index.js", function(exports, require, module){
+
+require.register("timoxley~keycode@0.3.0", function (exports, module) {
+// Source: http://jsfiddle.net/vWx8V/
+// http://stackoverflow.com/questions/5603195/full-list-of-javascript-keycodes
+
+var has = ({}).hasOwnProperty
+
+/**
+ * Conenience method returns corresponding value for given keyName or keyCode.
+ *
+ * @param {Mixed} keyCode {Number} or keyName {String}
+ * @return {Mixed}
+ * @api public
+ */
+
+exports = module.exports = function(searchInput) {
+  // Keyboard Events
+  if (searchInput && 'object' === typeof searchInput) {
+    var hasKeyCode = searchInput.which || searchInput.keyCode || searchInput.charCode
+    if (hasKeyCode) searchInput = hasKeyCode
+  }
+
+  // Numbers
+  if ('number' === typeof searchInput) return names[searchInput]
+
+  // Everything else (cast to string)
+  var search = String(searchInput)
+
+  // check codes
+  var foundNamedKey = codes[search.toLowerCase()]
+  if (foundNamedKey) return foundNamedKey
+
+  // check aliases
+  var foundNamedKey = aliases[search.toLowerCase()]
+  if (foundNamedKey) return foundNamedKey
+
+  // weird character?
+  if (search.length === 1) return search.charCodeAt(0)
+
+  return undefined
+}
+
+/**
+ * Get by name
+ *
+ *   exports.code['enter'] // => 13
+ */
+
+var codes = exports.code = exports.codes = {
+  'backspace': 8,
+  'tab': 9,
+  'enter': 13,
+  'shift': 16,
+  'ctrl': 17,
+  'alt': 18,
+  'pause/break': 19,
+  'caps lock': 20,
+  'esc': 27,
+  'space': 32,
+  'page up': 33,
+  'page down': 34,
+  'end': 35,
+  'home': 36,
+  'left': 37,
+  'up': 38,
+  'right': 39,
+  'down': 40,
+  'insert': 45,
+  'delete': 46,
+  'windows': 91,
+  'right click': 93,
+  'numpad *': 106,
+  'numpad +': 107,
+  'numpad -': 109,
+  'numpad .': 110,
+  'numpad /': 111,
+  'num lock': 144,
+  'scroll lock': 145,
+  'my computer': 182,
+  'my calculator': 183,
+  ';': 186,
+  '=': 187,
+  ',': 188,
+  '-': 189,
+  '.': 190,
+  '/': 191,
+  '`': 192,
+  '[': 219,
+  '\\': 220,
+  ']': 221,
+  "'": 222
+}
+
+// Helper aliases
+
+var aliases = exports.aliases = {
+  'ctl': 17,
+  'pause': 19,
+  'break': 19,
+  'caps': 20,
+  'escape': 27,
+  'pgup': 33,
+  'pgdn': 33,
+  'ins': 45,
+  'del': 46,
+  'spc': 32
+}
+
+
+/*!
+ * Programatically add the following
+ */
+
+// lower case chars
+for (i = 97; i < 123; i++) codes[String.fromCharCode(i)] = i - 32
+
+// numbers
+for (var i = 48; i < 58; i++) codes[i - 48] = i
+
+// function keys
+for (i = 1; i < 13; i++) codes['f'+i] = i + 111
+
+// numpad keys
+for (i = 0; i < 10; i++) codes['numpad '+i] = i + 96
+
+/**
+ * Get by code
+ *
+ *   exports.name[13] // => 'Enter'
+ */
+
+var names = exports.names = exports.title = {} // title for backward compat
+
+// Create reverse mapping
+for (i in codes) names[codes[i]] = i
+
+// Add aliases
+for (var alias in aliases) {
+  codes[alias] = aliases[alias]
+}
+
+});
+
+require.register("segmentio~extend@1.0.0", function (exports, module) {
+
+module.exports = function extend (object) {
+    // Takes an unlimited number of extenders.
+    var args = Array.prototype.slice.call(arguments, 1);
+
+    // For each extender, copy their properties on our object.
+    for (var i = 0, source; source = args[i]; i++) {
+        if (!source) continue;
+        for (var property in source) {
+            object[property] = source[property];
+        }
+    }
+
+    return object;
+};
+});
+
+require.register("ianstormtaylor~create-event@0.0.3", function (exports, module) {
+
+var extend = require("segmentio~extend@1.0.0")
+  , keycode = require("timoxley~keycode@0.3.0");
+
+
+/**
+ * Expose `createEvent`.
+ */
+
+module.exports = !!document.createEvent
+  ? createEvent
+  : createIeEvent;
+
+
+/**
+ * Default options.
+ */
+
+var defaults = {
+  alt           : false,
+  bubbles       : true,
+  button        : 0,
+  cancelable    : true,
+  clientX       : 0,
+  clientY       : 0,
+  ctrl          : false,
+  detail        : 1,
+  key           : 0,
+  meta          : false,
+  relatedTarget : null,
+  screenX       : 0,
+  screenY       : 0,
+  shift         : false,
+  view          : window
+};
+
+
+/**
+ * Create a non-IE event object.
+ *
+ * @param {String} type
+ * @param {Object} options
+ */
+
+function createEvent (type, options) {
+  switch (type) {
+    case 'dblclick':
+    case 'click':
+      return createMouseEvent(type, options);
+    case 'keydown':
+    case 'keyup':
+      return createKeyboardEvent(type, options);
+  }
+}
+
+
+/**
+ * Create a non-IE mouse event.
+ *
+ * @param {String} type
+ * @param {Object} options
+ */
+
+function createMouseEvent (type, options) {
+  options = clean(type, options);
+  var e = document.createEvent('MouseEvent');
+  e.initMouseEvent(
+    type,
+    options.bubbles,      // bubbles?
+    options.cancelable,   // cancelable?
+    options.view,         // view
+    options.detail,       // detail
+    options.screenX,      // screenX
+    options.screenY,      // screenY
+    options.clientX ,     // clientX
+    options.clientY,      // clientY
+    options.ctrl,         // ctrlKey
+    options.alt,          // altKey
+    options.shift,        // shiftKey
+    options.meta,         // metaKey
+    options.button,       // button
+    options.relatedTarget // relatedTarget
+  );
+  return e;
+}
+
+
+/**
+ * Create a non-IE keyboard event.
+ *
+ * @param {String} type
+ * @param {Object} options
+ */
+
+function createKeyboardEvent (type, options) {
+  options = clean(type, options);
+  var e = document.createEvent('KeyboardEvent');
+  (e.initKeyEvent || e.initKeyboardEvent).call(
+    e,
+    type,
+    options.bubbles,    // bubbles?
+    options.cancelable, // cancelable?
+    options.view,       // view
+    options.ctrl,       // ctrlKey
+    options.alt,        // altKey
+    options.shift,      // shiftKey
+    options.meta,       // metaKey
+    options.key,        // keyCode
+    options.key         // charCode
+  );
+
+  // super hack: http://stackoverflow.com/questions/10455626/keydown-simulation-in-chrome-fires-normally-but-not-the-correct-key/10520017#10520017
+  if (e.keyCode !== options.key) {
+    Object.defineProperty(e, 'keyCode', {
+      get: function () { return options.key; }
+    });
+    Object.defineProperty(e, 'charCode', {
+      get: function () { return options.key; }
+    });
+    Object.defineProperty(e, 'which', {
+      get: function () { return options.key; }
+    });
+  }
+
+  return e;
+}
+
+
+/**
+ * Create an IE event. Surprisingly nicer API, eh?
+ *
+ * @param {String} type
+ * @param {Object} options
+ */
+
+function createIeEvent (type, options) {
+  options = clean(type, options);
+  var e = document.createEventObject();
+  e.altKey = options.alt;
+  e.bubbles = options.bubbles;
+  e.button = options.button;
+  e.cancelable = options.cancelable;
+  e.clientX = options.clientX;
+  e.clientY = options.clientY;
+  e.ctrlKey = options.ctrl;
+  e.detail = options.detail;
+  e.metaKey = options.meta;
+  e.screenX = options.screenX;
+  e.screenY = options.screenY;
+  e.shiftKey = options.shift;
+  e.keyCode = options.key;
+  e.charCode = options.key;
+  e.view = options.view;
+  return e;
+}
+
+
+/**
+ * Back an `options` object by defaults, and convert some convenience features.
+ *
+ * @param {String} type
+ * @param {Object} options
+ * @return {Object} [description]
+ */
+
+function clean (type, options) {
+  options = extend({}, defaults, options);
+  if ('dblclick' === type) options.detail = 2;
+  if ('string' === typeof options.key) options.key = keycode(options.key);
+  return options;
+}
+});
+
+require.register("chemzqm~tap-event@0.0.8", function (exports, module) {
+var cancelEvents = [
+  'touchcancel',
+  'touchstart',
+]
+
+var endEvents = [
+  'touchend',
+]
+
+module.exports = Tap
+
+function Tap(callback) {
+  // to keep track of the original listener
+  listener.handler = callback
+
+  return listener
+
+  // el.addEventListener('touchstart', listener)
+  function listener(e1) {
+    // tap should only happen with a single finger
+    if (!e1.touches || e1.touches.length > 1)
+      return
+
+    var el = this;
+
+    cancelEvents.forEach(function (event) {
+      document.addEventListener(event, cleanup)
+    })
+    el.addEventListener('touchmove', cleanup);
+
+    endEvents.forEach(function (event) {
+      document.addEventListener(event, done)
+    })
+
+    function done(e2) {
+      // since touchstart is added on the same tick
+      // and because of bubbling,
+      // it'll execute this on the same touchstart.
+      // this filters out the same touchstart event.
+      if (e1 === e2)
+        return
+
+      cleanup()
+
+      // already handled
+      if (e2.defaultPrevented)
+        return
+
+      var preventDefault = e1.preventDefault
+      var stopPropagation = e1.stopPropagation
+
+      e2.stopPropagation = function () {
+        stopPropagation.call(e1)
+        stopPropagation.call(e2)
+      }
+
+      e2.preventDefault = function () {
+        preventDefault.call(e1)
+        preventDefault.call(e2)
+      }
+
+      // calls the handler with the `end` event,
+      // but i don't think it matters.
+      callback.call(el, e2)
+    }
+
+    function cleanup(e2) {
+      if (e1 === e2)
+        return
+
+      cancelEvents.forEach(function (event) {
+        document.removeEventListener(event, cleanup)
+      })
+      el.removeEventListener('touchmove', cleanup);
+
+      endEvents.forEach(function (event) {
+        document.removeEventListener(event, done)
+      })
+    }
+  }
+}
+
+});
+
+require.register("component~event@0.1.3", function (exports, module) {
 var bind = window.addEventListener ? 'addEventListener' : 'attachEvent',
     unbind = window.removeEventListener ? 'removeEventListener' : 'detachEvent',
     prefix = bind !== 'addEventListener' ? 'on' : '';
@@ -669,7 +965,46 @@ exports.unbind = function(el, type, fn, capture){
   return fn;
 };
 });
-require.register("component-query/index.js", function(exports, require, module){
+
+require.register("component~event@0.1.4", function (exports, module) {
+var bind = window.addEventListener ? 'addEventListener' : 'attachEvent',
+    unbind = window.removeEventListener ? 'removeEventListener' : 'detachEvent',
+    prefix = bind !== 'addEventListener' ? 'on' : '';
+
+/**
+ * Bind `el` event `type` to `fn`.
+ *
+ * @param {Element} el
+ * @param {String} type
+ * @param {Function} fn
+ * @param {Boolean} capture
+ * @return {Function}
+ * @api public
+ */
+
+exports.bind = function(el, type, fn, capture){
+  el[bind](prefix + type, fn, capture || false);
+  return fn;
+};
+
+/**
+ * Unbind `el` event `type`'s callback `fn`.
+ *
+ * @param {Element} el
+ * @param {String} type
+ * @param {Function} fn
+ * @param {Boolean} capture
+ * @return {Function}
+ * @api public
+ */
+
+exports.unbind = function(el, type, fn, capture){
+  el[unbind](prefix + type, fn, capture || false);
+  return fn;
+};
+});
+
+require.register("component~query@0.0.3", function (exports, module) {
 function one(selector, el) {
   return el.querySelector(selector);
 }
@@ -693,12 +1028,13 @@ exports.engine = function(obj){
 };
 
 });
-require.register("component-matches-selector/index.js", function(exports, require, module){
+
+require.register("component~matches-selector@0.1.2", function (exports, module) {
 /**
  * Module dependencies.
  */
 
-var query = require('query');
+var query = require("component~query@0.0.3");
 
 /**
  * Element prototype.
@@ -741,13 +1077,36 @@ function match(el, selector) {
 }
 
 });
-require.register("component-delegate/index.js", function(exports, require, module){
+
+require.register("discore~closest@0.1.2", function (exports, module) {
+var matches = require("component~matches-selector@0.1.2")
+
+module.exports = function (element, selector, checkYoSelf, root) {
+  element = checkYoSelf ? {parentNode: element} : element
+
+  root = root || document
+
+  // Make sure `element !== document` and `element != null`
+  // otherwise we get an illegal invocation
+  while ((element = element.parentNode) && element !== document) {
+    if (matches(element, selector))
+      return element
+    // After `matches` on the edge case that
+    // the selector matches the root
+    // (when the root is not the document)
+    if (element === root)
+      return  
+  }
+}
+});
+
+require.register("component~delegate@0.2.2", function (exports, module) {
 /**
  * Module dependencies.
  */
 
-var closest = require('closest')
-  , event = require('event');
+var closest = require("discore~closest@0.1.2")
+  , event = require("component~event@0.1.4");
 
 /**
  * Delegate event `type` to `selector`
@@ -786,14 +1145,216 @@ exports.unbind = function(el, type, fn, capture){
 };
 
 });
-require.register("component-events/index.js", function(exports, require, module){
+
+require.register("chemzqm~events@1.0.9", function (exports, module) {
 
 /**
  * Module dependencies.
  */
 
-var events = require('event');
-var delegate = require('delegate');
+var events = require("component~event@0.1.4");
+var delegate = require("component~delegate@0.2.2");
+var tap = require("chemzqm~tap-event@0.0.8");
+var closest = require("discore~closest@0.1.2");
+
+/**
+ * Expose `Events`.
+ */
+
+module.exports = Events;
+
+/**
+ * Initialize an `Events` with the given
+ * `el` object which events will be bound to,
+ * and the `obj` which will receive method calls.
+ *
+ * @param {Object} el
+ * @param {Object} obj
+ * @api public
+ */
+
+function Events(el, obj) {
+  if (!(this instanceof Events)) return new Events(el, obj);
+  if (!el) throw new Error('element required');
+  if (!obj) throw new Error('object required');
+  this.el = el;
+  this.obj = obj;
+  this._events = {};
+}
+
+/**
+ * Subscription helper.
+ */
+
+Events.prototype.sub = function(event, method, cb){
+  this._events[event] = this._events[event] || {};
+  this._events[event][method] = cb;
+};
+
+/**
+ * Bind to `event` with optional `method` name.
+ * When `method` is undefined it becomes `event`
+ * with the "on" prefix.
+ *
+ * Examples:
+ *
+ *  Direct event handling:
+ *
+ *    events.bind('click') // implies "onclick"
+ *    events.bind('click', 'remove')
+ *    events.bind('click', 'sort', 'asc')
+ *
+ *  Delegated event handling:
+ *
+ *    events.bind('click li > a')
+ *    events.bind('click li > a', 'remove')
+ *    events.bind('click a.sort-ascending', 'sort', 'asc')
+ *    events.bind('click a.sort-descending', 'sort', 'desc')
+ *
+ * @param {String} event
+ * @param {String|function} [method]
+ * @return {Function} callback
+ * @api public
+ */
+
+Events.prototype.bind = function(event, method){
+  var e = parse(event);
+  var el = this.el;
+  var obj = this.obj;
+  var name = e.name;
+  var method = method || 'on' + name;
+  var args = [].slice.call(arguments, 2);
+  var cb;
+
+  if (name === 'tap') {
+    cb = this.getTapCallback(e, method, args);
+    name = 'touchstart';
+  } else {
+    // callback
+    cb = function (){
+      var a = [].slice.call(arguments).concat(args);
+      obj[method].apply(obj, a);
+    }
+  }
+
+  // bind
+  if (e.selector) {
+    cb = delegate.bind(el, e.selector, name, cb);
+  } else {
+    events.bind(el, name, cb);
+  }
+
+  // subscription for unbinding
+  this.sub(name, method, cb);
+
+  return cb;
+};
+
+Events.prototype.getTapCallback = function (e, method, args) {
+  var obj = this.obj;
+  var el = this.el;
+  var selector = e.selector;
+  return tap(function (ev) {
+    if (selector) {
+      ev.delegateTarget = closest(ev.target, selector, true, el);
+    }
+    var a = [].slice.call(arguments).concat(args);
+    obj[method].apply(obj, a);
+  })
+}
+
+/**
+ * Unbind a single binding, all bindings for `event`,
+ * or all bindings within the manager.
+ *
+ * Examples:
+ *
+ *  Unbind direct handlers:
+ *
+ *     events.unbind('click', 'remove')
+ *     events.unbind('click')
+ *     events.unbind()
+ *
+ * Unbind delegate handlers:
+ *
+ *     events.unbind('click', 'remove')
+ *     events.unbind('click')
+ *     events.unbind()
+ *
+ * @param {String|Function} [event]
+ * @param {String|Function} [method]
+ * @api public
+ */
+
+Events.prototype.unbind = function(event, method){
+  if (0 == arguments.length) return this.unbindAll();
+  if (1 == arguments.length) return this.unbindAllOf(event);
+
+  // no bindings for this event
+  var bindings = this._events[event];
+  if (!bindings) return;
+
+  // no bindings for this method
+  var cb = bindings[method];
+  if (!cb) return;
+
+  events.unbind(this.el, event, cb);
+};
+
+/**
+ * Unbind all events.
+ *
+ * @api private
+ */
+
+Events.prototype.unbindAll = function(){
+  for (var event in this._events) {
+    this.unbindAllOf(event);
+  }
+};
+
+/**
+ * Unbind all events for `event`.
+ *
+ * @param {String} event
+ * @api private
+ */
+
+Events.prototype.unbindAllOf = function(event){
+  var bindings = this._events[event];
+  if (!bindings) return;
+
+  for (var method in bindings) {
+    this.unbind(event, method);
+  }
+};
+
+/**
+ * Parse `event`.
+ *
+ * @param {String} event
+ * @return {Object}
+ * @api private
+ */
+
+function parse(event) {
+  var parts = event.split(/ +/);
+  return {
+    name: parts.shift(),
+    selector: parts.join(' ')
+  }
+}
+
+});
+
+require.register("component~events@1.0.7", function (exports, module) {
+
+/**
+ * Module dependencies.
+ */
+
+var events = require("component~event@0.1.3");
+var delegate = require("component~delegate@0.2.2");
 
 /**
  * Expose `Events`.
@@ -965,28 +1526,350 @@ function parse(event) {
 }
 
 });
-require.register("discore-closest/index.js", function(exports, require, module){
-var matches = require('matches-selector')
 
-module.exports = function (element, selector, checkYoSelf, root) {
-  element = checkYoSelf ? {parentNode: element} : element
+require.register("component~props@1.1.2", function (exports, module) {
+/**
+ * Global Names
+ */
 
-  root = root || document
+var globals = /\b(this|Array|Date|Object|Math|JSON)\b/g;
 
-  // Make sure `element !== document` and `element != null`
-  // otherwise we get an illegal invocation
-  while ((element = element.parentNode) && element !== document) {
-    if (matches(element, selector))
-      return element
-    // After `matches` on the edge case that
-    // the selector matches the root
-    // (when the root is not the document)
-    if (element === root)
-      return  
+/**
+ * Return immediate identifiers parsed from `str`.
+ *
+ * @param {String} str
+ * @param {String|Function} map function or prefix
+ * @return {Array}
+ * @api public
+ */
+
+module.exports = function(str, fn){
+  var p = unique(props(str));
+  if (fn && 'string' == typeof fn) fn = prefixed(fn);
+  if (fn) return map(str, p, fn);
+  return p;
+};
+
+/**
+ * Return immediate identifiers in `str`.
+ *
+ * @param {String} str
+ * @return {Array}
+ * @api private
+ */
+
+function props(str) {
+  return str
+    .replace(/\.\w+|\w+ *\(|"[^"]*"|'[^']*'|\/([^/]+)\//g, '')
+    .replace(globals, '')
+    .match(/[$a-zA-Z_]\w*/g)
+    || [];
+}
+
+/**
+ * Return `str` with `props` mapped with `fn`.
+ *
+ * @param {String} str
+ * @param {Array} props
+ * @param {Function} fn
+ * @return {String}
+ * @api private
+ */
+
+function map(str, props, fn) {
+  var re = /\.\w+|\w+ *\(|"[^"]*"|'[^']*'|\/([^/]+)\/|[a-zA-Z_]\w*/g;
+  return str.replace(re, function(_){
+    if ('(' == _[_.length - 1]) return fn(_);
+    if (!~props.indexOf(_)) return _;
+    return fn(_);
+  });
+}
+
+/**
+ * Return unique array.
+ *
+ * @param {Array} arr
+ * @return {Array}
+ * @api private
+ */
+
+function unique(arr) {
+  var ret = [];
+
+  for (var i = 0; i < arr.length; i++) {
+    if (~ret.indexOf(arr[i])) continue;
+    ret.push(arr[i]);
+  }
+
+  return ret;
+}
+
+/**
+ * Map with prefix `str`.
+ */
+
+function prefixed(str) {
+  return function(_){
+    return str + _;
+  };
+}
+
+});
+
+require.register("component~to-function@2.0.0", function (exports, module) {
+/**
+ * Module Dependencies
+ */
+
+var expr = require("component~props@1.1.2");
+
+/**
+ * Expose `toFunction()`.
+ */
+
+module.exports = toFunction;
+
+/**
+ * Convert `obj` to a `Function`.
+ *
+ * @param {Mixed} obj
+ * @return {Function}
+ * @api private
+ */
+
+function toFunction(obj) {
+  switch ({}.toString.call(obj)) {
+    case '[object Object]':
+      return objectToFunction(obj);
+    case '[object Function]':
+      return obj;
+    case '[object String]':
+      return stringToFunction(obj);
+    case '[object RegExp]':
+      return regexpToFunction(obj);
+    default:
+      return defaultToFunction(obj);
   }
 }
+
+/**
+ * Default to strict equality.
+ *
+ * @param {Mixed} val
+ * @return {Function}
+ * @api private
+ */
+
+function defaultToFunction(val) {
+  return function(obj){
+    return val === obj;
+  }
+}
+
+/**
+ * Convert `re` to a function.
+ *
+ * @param {RegExp} re
+ * @return {Function}
+ * @api private
+ */
+
+function regexpToFunction(re) {
+  return function(obj){
+    return re.test(obj);
+  }
+}
+
+/**
+ * Convert property `str` to a function.
+ *
+ * @param {String} str
+ * @return {Function}
+ * @api private
+ */
+
+function stringToFunction(str) {
+  // immediate such as "> 20"
+  if (/^ *\W+/.test(str)) return new Function('_', 'return _ ' + str);
+
+  // properties such as "name.first" or "age > 18" or "age > 18 && age < 36"
+  return new Function('_', 'return ' + get(str));
+}
+
+/**
+ * Convert `object` to a function.
+ *
+ * @param {Object} object
+ * @return {Function}
+ * @api private
+ */
+
+function objectToFunction(obj) {
+  var match = {}
+  for (var key in obj) {
+    match[key] = typeof obj[key] === 'string'
+      ? defaultToFunction(obj[key])
+      : toFunction(obj[key])
+  }
+  return function(val){
+    if (typeof val !== 'object') return false;
+    for (var key in match) {
+      if (!(key in val)) return false;
+      if (!match[key](val[key])) return false;
+    }
+    return true;
+  }
+}
+
+/**
+ * Built the getter function. Supports getter style functions
+ *
+ * @param {String} str
+ * @return {String}
+ * @api private
+ */
+
+function get(str) {
+  var props = expr(str);
+  if (!props.length) return '_.' + str;
+
+  var val;
+  for(var i = 0, prop; prop = props[i]; i++) {
+    val = '_.' + prop;
+    val = "('function' == typeof " + val + " ? " + val + "() : " + val + ")";
+    str = str.replace(new RegExp(prop, 'g'), val);
+  }
+
+  return str;
+}
+
 });
-require.register("yields-delay/index.js", function(exports, require, module){
+
+require.register("component~type@1.0.0", function (exports, module) {
+
+/**
+ * toString ref.
+ */
+
+var toString = Object.prototype.toString;
+
+/**
+ * Return the type of `val`.
+ *
+ * @param {Mixed} val
+ * @return {String}
+ * @api public
+ */
+
+module.exports = function(val){
+  switch (toString.call(val)) {
+    case '[object Function]': return 'function';
+    case '[object Date]': return 'date';
+    case '[object RegExp]': return 'regexp';
+    case '[object Arguments]': return 'arguments';
+    case '[object Array]': return 'array';
+    case '[object String]': return 'string';
+  }
+
+  if (val === null) return 'null';
+  if (val === undefined) return 'undefined';
+  if (val && val.nodeType === 1) return 'element';
+  if (val === Object(val)) return 'object';
+
+  return typeof val;
+};
+
+});
+
+require.register("component~each@0.2.3", function (exports, module) {
+
+/**
+ * Module dependencies.
+ */
+
+var type = require("component~type@1.0.0");
+var toFunction = require("component~to-function@2.0.0");
+
+/**
+ * HOP reference.
+ */
+
+var has = Object.prototype.hasOwnProperty;
+
+/**
+ * Iterate the given `obj` and invoke `fn(val, i)`
+ * in optional context `ctx`.
+ *
+ * @param {String|Array|Object} obj
+ * @param {Function} fn
+ * @param {Object} [ctx]
+ * @api public
+ */
+
+module.exports = function(obj, fn, ctx){
+  fn = toFunction(fn);
+  ctx = ctx || this;
+  switch (type(obj)) {
+    case 'array':
+      return array(obj, fn, ctx);
+    case 'object':
+      if ('number' == typeof obj.length) return array(obj, fn, ctx);
+      return object(obj, fn, ctx);
+    case 'string':
+      return string(obj, fn, ctx);
+  }
+};
+
+/**
+ * Iterate string chars.
+ *
+ * @param {String} obj
+ * @param {Function} fn
+ * @param {Object} ctx
+ * @api private
+ */
+
+function string(obj, fn, ctx) {
+  for (var i = 0; i < obj.length; ++i) {
+    fn.call(ctx, obj.charAt(i), i);
+  }
+}
+
+/**
+ * Iterate object keys.
+ *
+ * @param {Object} obj
+ * @param {Function} fn
+ * @param {Object} ctx
+ * @api private
+ */
+
+function object(obj, fn, ctx) {
+  for (var key in obj) {
+    if (has.call(obj, key)) {
+      fn.call(ctx, key, obj[key]);
+    }
+  }
+}
+
+/**
+ * Iterate array-ish.
+ *
+ * @param {Array|Object} obj
+ * @param {Function} fn
+ * @param {Object} ctx
+ * @api private
+ */
+
+function array(obj, fn, ctx) {
+  for (var i = 0; i < obj.length; ++i) {
+    fn.call(ctx, obj[i], i);
+  }
+}
+
+});
+
+require.register("yields~delay@0.0.1", function (exports, module) {
 
 /**
  * timeoutid
@@ -1013,7 +1896,8 @@ module.exports = function(ms, fn){
 };
 
 });
-require.register("yields-indexof/index.js", function(exports, require, module){
+
+require.register("yields~indexof@1.0.0", function (exports, module) {
 
 /**
  * indexof
@@ -1042,18 +1926,19 @@ module.exports = function(el){
 };
 
 });
-require.register("chemzqm-sortable/index.js", function(exports, require, module){
+
+require.register("chemzqm~sortable@0.3.3", function (exports, module) {
 /**
  * dependencies
  */
 
-var matches = require('matches-selector')
-  , emitter = require('emitter')
-  , classes = require('classes')
-  , events = require('events')
-  , indexof = require('indexof')
-  , closest = require('closest')
-  , delay = require('delay');
+var matches = require("component~matches-selector@0.1.2")
+  , emitter = require("component~emitter@1.1.3")
+  , classes = require("component~classes@1.2.1")
+  , events = require("component~events@1.0.7")
+  , indexof = require("yields~indexof@1.0.0")
+  , delay = require("yields~delay@0.0.1")
+  , each = require("component~each@0.2.3");
 
 var styles = window.getComputedStyle;
 /**
@@ -1129,7 +2014,7 @@ Sortable.prototype.onmousedown = function(e) {
     this.match = matches(e.target, this._handle);
   }
   this.reset();
-  this.draggable = closest(e.target, this.selector, true, this.el);
+  this.draggable = up(e.target, this.selector, this.el);
   if (!this.draggable) return;
   this.draggable.draggable = true;
   this.bindEvents();
@@ -1206,8 +2091,8 @@ Sortable.prototype.ondragover = function(e){
     this.emitMax();
     return;
   }
-  //empty target
-  if (this.connected && len === 0) {
+  var emptyTarget = (this.connected && len === 0);
+  if (emptyTarget) {
     return this.el.appendChild(this.clone);
   }
   if (!this.draggable || el == this.el) return;
@@ -1233,7 +2118,7 @@ Sortable.prototype.ondragover = function(e){
 
 Sortable.prototype.ondragend = function(e){
   if (!this.draggable) return;
-  if (this.clone) this.clone.parentNode.removeChild(this.clone);
+  if (this.clone) remove(this.clone);
   this.draggable.style.display = this.display;
   classes(this.draggable).remove('dragging');
   if (this.connected || this.i != indexof(this.draggable)) {
@@ -1338,6 +2223,19 @@ Sortable.prototype.connect = function(sortable) {
 }
 
 /**
+ * Remove the given `el`.
+ *
+ * @param {Element} el
+ * @return {Element}
+ * @api private
+ */
+
+function remove (el) {
+  if (!el.parentNode) return;
+  el.parentNode.removeChild(el);
+}
+
+/**
  * Check if parent node contains node.
  *
  * @param {String} parent
@@ -1354,9 +2252,18 @@ function contains (parent, node) {
   return false;
 }
 
+function up (node, selector, container) {
+  while (node != container) {
+    if (matches(node, selector)) {
+      return node;
+    }
+    node = node.parentNode;
+  }
+}
 
 });
-require.register("tabs/index.js", function(exports, require, module){
+
+require.register("tabs", function (exports, module) {
 /*!
  *
  * tabs
@@ -1365,11 +2272,11 @@ require.register("tabs/index.js", function(exports, require, module){
  *
  */
 
-var Emitter = require('emitter')
-var Sortable = require('sortable');
-var domify = require('domify');
-var events = require ('event');
-var classes = require ('classes');
+var Emitter = require("component~emitter@1.1.3")
+var Sortable = require("chemzqm~sortable@0.3.3");
+var domify = require("component~domify@1.2.2");
+var events = require("chemzqm~events@1.0.9");
+var classes = require("component~classes@1.2.1");
 var slice = Array.prototype.slice;
 
 /**
@@ -1390,8 +2297,9 @@ function Tabs (parent) {
   var body = this.body = domify('<div class="tabs-body"></div>');
   parent.appendChild(header);
   parent.appendChild(body);
-  this._onclick = this.onclick.bind(this);
-  events.bind(this.header, 'click', this._onclick);
+  this.events = events(header, this);
+  this.events.bind('click .close', '_close');
+  this.events.bind('click li', '_click');
 }
 
 Emitter(Tabs.prototype);
@@ -1401,7 +2309,7 @@ Emitter(Tabs.prototype);
  * @api public
  */
 Tabs.prototype.remove = function() {
-  events.unbind(this.header, 'click', this._onclick);
+  this.events.unbind();
   this.body.parentNode.removeChild(this.body);
   this.header.parentNode.removeChild(this.header);
 }
@@ -1439,6 +2347,7 @@ Tabs.prototype.sortable = function() {
  */
 Tabs.prototype.add = function(title, node) {
   var tab = domify('<li>' + title + '</li>');
+  node = (typeof node === 'string') ? domify(node) : node;
   this.header.appendChild(tab);
   if (this._closable) {
     var close = domify('<a href="#" class="close">×</a>');
@@ -1474,96 +2383,28 @@ Tabs.prototype.active = function(el) {
   this.emit('active', el);
 }
 
-/**
- * 
- * @param {Event} e
- * @api private
- */
-Tabs.prototype.onclick = function(e) {
+Tabs.prototype._click = function (e) {
+  var el = e.target;
+  if (classes(el).has('close')) return;
+  e.stopPropagation();
+  this.active(el);
+}
+
+Tabs.prototype._close = function (e) {
   var el = e.target;
   e.preventDefault();
   e.stopPropagation();
-  if (classes(el).has('close')) {
-    var li = el.parentNode;
-    var prev = li.previousSibling;
-    var next = li.nextSibling;
-    var target = li.__target;
-    target.parentNode.removeChild(target);
-    li.parentNode.removeChild(li);
-    if (this._active !== li) return;
-    if (prev) return this.active(prev);
-    if (next) return this.active(next);
-    this.emit('empty');
-  }
-  else if (el.parentNode === this.header) {
-    this.active(el);
-  }
+  var li = el.parentNode;
+  var prev = li.previousElementSibling;
+  var next = li.nextElementSibling;
+  var target = li.__target;
+  target.parentNode.removeChild(target);
+  li.parentNode.removeChild(li);
+  if (this.body.childNodes.length === 0) return this.emit('empty');
+  if (this._active !== li) return;
+  if (prev) return this.active(prev);
+  if (next) return this.active(next);
 }
 
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-require.alias("component-emitter/index.js", "tabs/deps/emitter/index.js");
-require.alias("component-emitter/index.js", "emitter/index.js");
-
-require.alias("component-domify/index.js", "tabs/deps/domify/index.js");
-require.alias("component-domify/index.js", "domify/index.js");
-
-require.alias("component-classes/index.js", "tabs/deps/classes/index.js");
-require.alias("component-classes/index.js", "classes/index.js");
-require.alias("component-indexof/index.js", "component-classes/deps/indexof/index.js");
-
-require.alias("component-event/index.js", "tabs/deps/event/index.js");
-require.alias("component-event/index.js", "event/index.js");
-
-require.alias("chemzqm-sortable/index.js", "tabs/deps/sortable/index.js");
-require.alias("chemzqm-sortable/index.js", "tabs/deps/sortable/index.js");
-require.alias("chemzqm-sortable/index.js", "sortable/index.js");
-require.alias("component-matches-selector/index.js", "chemzqm-sortable/deps/matches-selector/index.js");
-require.alias("component-query/index.js", "component-matches-selector/deps/query/index.js");
-
-require.alias("component-emitter/index.js", "chemzqm-sortable/deps/emitter/index.js");
-
-require.alias("component-events/index.js", "chemzqm-sortable/deps/events/index.js");
-require.alias("component-event/index.js", "component-events/deps/event/index.js");
-
-require.alias("component-delegate/index.js", "component-events/deps/delegate/index.js");
-require.alias("discore-closest/index.js", "component-delegate/deps/closest/index.js");
-require.alias("discore-closest/index.js", "component-delegate/deps/closest/index.js");
-require.alias("component-matches-selector/index.js", "discore-closest/deps/matches-selector/index.js");
-require.alias("component-query/index.js", "component-matches-selector/deps/query/index.js");
-
-require.alias("discore-closest/index.js", "discore-closest/index.js");
-require.alias("component-event/index.js", "component-delegate/deps/event/index.js");
-
-require.alias("component-classes/index.js", "chemzqm-sortable/deps/classes/index.js");
-require.alias("component-indexof/index.js", "component-classes/deps/indexof/index.js");
-
-require.alias("discore-closest/index.js", "chemzqm-sortable/deps/closest/index.js");
-require.alias("discore-closest/index.js", "chemzqm-sortable/deps/closest/index.js");
-require.alias("component-matches-selector/index.js", "discore-closest/deps/matches-selector/index.js");
-require.alias("component-query/index.js", "component-matches-selector/deps/query/index.js");
-
-require.alias("discore-closest/index.js", "discore-closest/index.js");
-require.alias("yields-delay/index.js", "chemzqm-sortable/deps/delay/index.js");
-
-require.alias("yields-indexof/index.js", "chemzqm-sortable/deps/indexof/index.js");
-require.alias("yields-indexof/index.js", "chemzqm-sortable/deps/indexof/index.js");
-require.alias("yields-indexof/index.js", "yields-indexof/index.js");
-require.alias("chemzqm-sortable/index.js", "chemzqm-sortable/index.js");
