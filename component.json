@@ -13,8 +13,8 @@
     "component/emitter": "*",
     "component/domify": "*",
     "component/classes": "*",
-    "component/events": "*",
     "ianstormtaylor/create-event": "*",
+    "chemzqm/events": "*",
     "chemzqm/sortable": "*"
   },
   "development": {
