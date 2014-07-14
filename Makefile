@@ -11,6 +11,15 @@ test:
 test-browser:
 	@component test browser
 
+doc:
+	@component build
+	@rm -fr .gh-pages
+	@mkdir .gh-pages
+	@mv build .gh-pages/
+	@cp index.html .gh-pages/index.html
+	@ghp-import .gh-pages -n -p
+	@rm -fr .gh-pages
+
 clean:
 	rm -rf components build
 
