@@ -19,7 +19,7 @@ if (window._phantom) {
   }
 }
 
-var Tabs = require('tabs');
+var Tabs = require('..');
 var parentNode;
 var assert = require('assert');
 var domify = require('domify');

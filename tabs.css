@@ -41,7 +41,3 @@ ul.tabs-header li .close:hover {
 .tabs-body .hide {
   display: none;
 }
-
-.tabs-body .active {
-  color: green;
-}

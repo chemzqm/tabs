@@ -1,7 +1,7 @@
 {
   "name": "tabs",
   "repository": "chemzqm/tabs",
-  "version": "0.0.3",
+  "version": "1.0.0",
   "description": "dynamic tabs component with add, remove and order support",
   "keywords": [
     "tabs"
@@ -13,8 +13,7 @@
     "component/emitter": "*",
     "component/domify": "*",
     "component/classes": "*",
-    "ianstormtaylor/create-event": "*",
-    "chemzqm/events": "*",
+    "component/events": "*",
     "chemzqm/sortable": "*"
   },
   "development": {

@@ -6,17 +6,17 @@ components: component.json
 	@component-install --dev
 
 test:
-	@component test phantom
+	@node_modules/.bin/karma start --single-run
 
 test-browser:
 	@component test browser
 
 doc:
-	@component build
+	@webpack example/index.js example/bundle.js
 	@rm -fr .gh-pages
 	@mkdir .gh-pages
 	@mv build .gh-pages/
-	@cp index.html .gh-pages/index.html
+	@cp example/* .gh-pages
 	@ghp-import .gh-pages -n -p
 	@rm -fr .gh-pages
 

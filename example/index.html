@@ -3,7 +3,7 @@
   <head>
     <title>tabs</title>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="build/build.css">
+    <link rel="stylesheet" href="../tabs.css">
     <style>
       *, *:before, *:after {
         -webkit-box-sizing: border-box;
@@ -60,33 +60,6 @@
     <div class="contents" data-title="tab 2"><h2>Tab 2</h2><p>Hi there</p></div>
     <div class="contents" data-title="tab 3"><h2>Tab 3</h2><p>You seem to like clicking tabs</p></div>
 
-    <script src="build/build.js"></script>
-    <script>
-      var Tabs = require('tabs');
-
-      var parent = document.getElementById('tabs');
-      var tabs = new Tabs(parent);
-      tabs.closable()
-      tabs.sortable();
-      var contents = document.querySelectorAll('.contents');
-      for (var i = 0; i < contents.length; i++) {
-        var title = contents[i].getAttribute('data-title');
-        tabs.add(title, contents[i]);
-      }
-      tabs.on('empty', function() {
-        console.log('empty');
-      })
-      tabs.on('sort', function(lis) {
-        console.log(lis);
-      })
-      tabs.on('active', function(el) {
-        console.log(el);
-      })
-      var btn = document.getElementById('remove');
-      btn.addEventListener('click', function(){
-        tabs.remove();
-      })
-      tabs.active(':first-child');
-    </script>
+    <script src="./bundle.js"></script>
   </body>
 </html>
