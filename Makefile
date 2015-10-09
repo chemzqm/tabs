@@ -15,7 +15,6 @@ doc:
 	@webpack example/index.js example/bundle.js
 	@rm -fr .gh-pages
 	@mkdir .gh-pages
-	@mv build .gh-pages/
 	@cp example/* .gh-pages
 	@ghp-import .gh-pages -n -p
 	@rm -fr .gh-pages
