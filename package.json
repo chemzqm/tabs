@@ -1,7 +1,7 @@
 {
   "name": "tab-component",
-  "description": "[![Build Status](https://secure.travis-ci.org/chemzqm/tabs.png)](http://travis-ci.org/chemzqm/tabs)",
-  "version": "1.0.0",
+  "description": "Dynamic tabs component with add, remove and order support.",
+  "version": "1.0.1",
   "main": "index.js",
   "directories": {
     "example": "example",
@@ -30,7 +30,8 @@
   },
   "keywords": [
     "tabs",
-    "tab"
+    "tab",
+    "component"
   ],
   "author": "chemzqm@gmail.com",
   "license": "MIT",

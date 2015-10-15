@@ -12,6 +12,10 @@ If you just want to convert tabs from static html, consider use [stagas/tabify](
 
     component install chemzqm/tabs
 
+or
+
+    npm install tab-component
+
 ## Usage
 
 ```js
