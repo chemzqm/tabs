@@ -1,5 +1,7 @@
 # tabs
 
+[![NPM version](https://badge.fury.io/js/tab-component.png)](http://badge.fury.io/js/tab-component)
+[![Dependency Status](https://david-dm.org/chemzqm/tabs.png)](https://david-dm.org/chemzqm/tabs)
 [![Build Status](https://secure.travis-ci.org/chemzqm/tabs.png)](http://travis-ci.org/chemzqm/tabs)
 
 [demo](http://chemzqm.github.io/tabs/)
