@@ -3,7 +3,7 @@
   <head>
     <title>tabs</title>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="./tabs.css">
+    <link rel="stylesheet" href="../tabs.css">
     <style>
       *, *:before, *:after {
         -webkit-box-sizing: border-box;
@@ -11,54 +11,32 @@
         box-sizing: border-box;
       }
       #tabs,
-      .tabs {
+      #mytabs {
         padding: 0px;
         width: 600px;
         margin: 10px auto;
       }
-      ul.tabs-header {
-        border-bottom: 1px solid #DDD;
-      }
-      ul.tabs-header li {
-        float: left;
-        margin-bottom: -1px;
-        display: block;
-        cursor: pointer;
-        margin-right: 2px;
-        line-height: 1.428571429;
-        border-radius: 4px 4px 0 0;
-        position: relative;
-        padding: 10px 15px;
-        color: #555;
-        background-color: #FFF;
-        border: 1px solid rgba(0, 0, 0, 0);
-        color: #428BCA;
-        background: rgba(0, 0, 0, 0);
-      }
-      ul.tabs-header li:hover,
-      ul.tabs-header li:focus {
-        border-color: #EEE #EEE #DDD;
-        background-color: #EEE;
-      }
-      ul.tabs-header li.active {
-        color: #555;
-        cursor: default;
-        background-color: #FFF;
-        border: 1px solid #DDD;
-        border-bottom-color: rgba(0, 0, 0, 0);
-      }
-      .tabs-body {
-        padding: 20px;
-        font-family: Arial;
-      }
     </style>
   </head>
   <body>
-    <div id="tabs"><button id="remove">remove</button></div>
-
-    <div class="contents" data-title="tab 1"><h2>Tab 1</h2><p>Hello</p></div>
-    <div class="contents" data-title="tab 2"><h2>Tab 2</h2><p>Hi there</p></div>
-    <div class="contents" data-title="tab 3"><h2>Tab 3</h2><p>You seem to like clicking tabs</p></div>
+    <div id="tabs">
+      <ul class="tabs-header">
+        <li class="title">tab1</li>
+        <li class="title">tab2</li>
+        <li class="title">tab3</li>
+      </ul>
+      <div class="tabs-body">
+        <div>
+          <h2>Tab 1</h2>
+        </div>
+        <div>
+          <h2>Tab 2</h2>
+        </div>
+        <div>
+          <h2>Tab 3</h2>
+        </div>
+      </div>
+    </div>
 
     <script src="./bundle.js"></script>
   </body>

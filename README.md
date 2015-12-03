@@ -1,14 +1,14 @@
 # tabs
 
-[![NPM version](https://badge.fury.io/js/tab-component.png)](http://badge.fury.io/js/tab-component)
-[![Dependency Status](https://david-dm.org/chemzqm/tabs.png)](https://david-dm.org/chemzqm/tabs)
-[![Build Status](https://secure.travis-ci.org/chemzqm/tabs.png)](http://travis-ci.org/chemzqm/tabs)
+[![NPM version](https://img.shields.io/npm/v/tab-component.svg?style=flat-square)](https://www.npmjs.com/package/tab-component)
+[![Dependency Status](https://img.shields.io/david/chemzqm/tabs.svg?style=flat-square)](https://david-dm.org/chemzqm/tabs)
+[![Build Status](https://img.shields.io/travis/chemzqm/tabs/master.svg?style=flat-square)](http://travis-ci.org/chemzqm/tabs)
 
 [demo](http://chemzqm.github.io/tabs/)
 
 Dynamic tabs component with add, remove and order support.
 
-If you just want to convert tabs from static html, consider use [stagas/tabify](https://github.com/stagas/tabify).
+May not works in ie < 9
 
 ## Install
 
@@ -20,28 +20,39 @@ or
 
 ## Usage
 
+``` html
+<div id="tabs">
+  <ul class="tabs-header">
+    <li>tab1</li>
+  </ul>
+  <div class="tabs-body">
+    <div>
+      body
+    </div>
+  </div>
+</div>
+```
+
+__`tabs-header` and `tabs-body` is requried classes for header and body__
+
 ```js
 var Tabs = require('tabs')
 
-var parent = document.getElementById('tabs');
-var tabs = new Tabs(parent);
+var parentNode = document.getElementById('tabs');
+var tabs = new Tabs(parentNode);
 tabs.closable();
 tabs.sortable();
-var contents = document.querySelectorAll('.tabs');
-for (var i = 0; i < contents.length; i++) {
-  var title = contents[i].getAttribute('data-title');
-  tabs.add(title, contents[i]);
-}
 ```
 ## events
 
 * `active` emitted with activated nav element
 * `sort` emitted when the tabs get reordered
 * `empty` emitted when all tabs removed
+* `remove` emitted with remove header and body
 
 ## API
 
-### new Tabs(parent)
+### new Tabs(parentNode)
 
 Init tabs inside parent node.
 
@@ -53,23 +64,21 @@ Add close icon to the tab navs to make the tabs closable.
 
 Make the tab navs sortable
 
-### .add(title, node | string)
+### .add(title, content)
 
-Add a tab with title string and associate dom node or template string.
+Add a tab with title and content (could be string of element)
 
 ### .active(el | selector)
 
 Active the tab by css query(querySelector inside) or tab element.
 
-### .remove()
+### .unbind()
 
-Destroy this tabs instance.
+Unbind all event handlers, including sort, click
 
-## License
+## MIT license
 
-The MIT License (MIT)
-
-Copyright (c) 2013 Qiming Zhao <chemzqm@gmail.com>
+Copyright (c) 2015 chemzqm@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

@@ -1,15 +1,8 @@
-
-build: components index.js tabs.css
-	@component-build --dev
-
-components: component.json
-	@component-install --dev
+dev:
+	@webpack example/index.js example/bundle.js -w -d
 
 test:
 	@node_modules/.bin/karma start --single-run
-
-test-browser:
-	@component test browser
 
 doc:
 	@webpack example/index.js example/bundle.js
@@ -22,4 +15,4 @@ doc:
 clean:
 	rm -rf components build
 
-.PHONY: clean test test-browser
+.PHONY: clean test test-browser dev

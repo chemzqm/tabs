@@ -7,45 +7,62 @@
  */
 
 var Emitter = require('emitter')
-var Sortable = require('sortable');
-var domify = require('domify');
-var events = require ('events');
-var classes = require ('classes');
-var slice = Array.prototype.slice;
+var domify = require('domify')
+var events = require('events')
+var classes = require('classes')
+var Sortable = require('sweet-sortable')
+var traverse = require('traverse')
+var matches = require('matches-selector')
 
 /**
  * Exports.
  */
 
-module.exports = Tabs;
+module.exports = Tabs
 
 /**
- * Init the dom structor with parent node.
+ * Construct Tabs with parentNode and optional options
+ *
+ * opts.headerSelector children selector for header default `li`
+ * opts.bodySelector children selector for body default `div`
  *
  * @param {Element} parent
+ * @params {opts} optional options
  * @api public
  */
-function Tabs (parent) {
-  if(! this instanceof Tabs) return new Tabs(parent);
-  var header = this.header = domify('<ul class="tabs-header"></ul>');
-  var body = this.body = domify('<div class="tabs-body"></div>');
-  parent.appendChild(header);
-  parent.appendChild(body);
-  this.events = events(header, this);
-  this.events.bind('click .close', '_close');
-  this.events.bind('click li', '_click');
+function Tabs (parentNode, opts) {
+  if(! this instanceof Tabs) return new Tabs(parentNode, opts)
+  opts = opts || {}
+  opts.headerSelector = opts.headerSelector || 'li'
+  opts.bodySelector = opts.bodySelector || 'div'
+  this.opts = opts
+  this.header = parentNode.querySelector('.tabs-header')
+  this.body = parentNode.querySelector('.tabs-body')
+  if (!this.header) throw new Error('expect header element with class tabs-header')
+  if (!this.body) throw new Error('expect body element with class tabs-body')
+  var hs = opts.headerSelector
+  var titles = children(this.header, hs)
+  var contents = children(this.body, opts.bodySelector)
+  if (titles.length !== contents.length) throw new Error('titles length and contents length not the same')
+  for (var i = 0, len = titles.length; i < len; i++) {
+    var item = titles[i]
+    item.__target = contents[i]
+  }
+  this.events = events(this.header, this)
+  this.events.bind('click .close', 'close')
+  this.events.bind('click ' + hs, 'click')
+  if (titles.length) this.active(titles[0])
 }
 
-Emitter(Tabs.prototype);
+Emitter(Tabs.prototype)
 
 /**
  * Destroy all the tabs
  * @api public
  */
-Tabs.prototype.remove = function() {
-  this.events.unbind();
-  this.body.parentNode.removeChild(this.body);
-  this.header.parentNode.removeChild(this.header);
+Tabs.prototype.unbind = function() {
+  this.events.unbind()
+  if (this._sortable) this._sortable.unbind()
 }
 
 /**
@@ -54,43 +71,56 @@ Tabs.prototype.remove = function() {
  * @api public
  */
 Tabs.prototype.closable = function() {
-  this._closable = true;
-  return this;
-}
-
-/**
- * Make tabs sortable
- * @api public
- */
-Tabs.prototype.sortable = function() {
-  var sortable = Sortable(this.header)
-  sortable.bind('li');
-  sortable.on('update', function() {
-    var lis = this.header.childNodes;
-    this.emit('sort', slice.call(lis));
-  }.bind(this));
-  return this;
-}
-
-/**
- * Add tab with `title` string and related dom node
- *
- * @param {String} title
- * @param {Element} node
- * @api public
- */
-Tabs.prototype.add = function(title, node) {
-  var tab = domify('<li>' + title + '</li>');
-  node = (typeof node === 'string') ? domify(node) : node;
-  this.header.appendChild(tab);
-  if (this._closable) {
-    var close = domify('<a href="#" class="close">×</a>');
-    tab.appendChild(close);
+  this._closable = true
+  var hs = this.opts.headerSelector
+  var titles = children(this.header, hs)
+  for (var i = 0, l = titles.length; i < l; i++) {
+    var close = domify('<a href="#" class="close">×</a>')
+    titles[i].appendChild(close)
   }
-  tab.__target = node;
-  this.body.appendChild(node);
-  this.active(tab);
-  return this;
+  return this
+}
+
+/**
+ * Make tabs sortable, pass true if you need vertical sortable
+ *
+ * @public
+ * @param {Boolean} vertical
+ * @return {self}
+ */
+Tabs.prototype.sortable = function(vertical) {
+  var hs = this.opts.headerSelector
+  var sortable = this._sortable = Sortable(this.header)
+  sortable.bind(hs)
+  if (!vertical) {
+    sortable.horizon()
+  }
+  sortable.on('update', function() {
+    var titles = children(this.header, hs)
+    this.emit('sort', titles)
+  }.bind(this))
+  return this
+}
+
+/**
+ * Add tab with `title` element(string) and content element(string)
+ *
+ * @param {Element | String} title
+ * @param {Element | String} node
+ * @api public
+ */
+Tabs.prototype.add = function(title, content) {
+  if (typeof title === 'string') title = domify(title)
+  if (typeof content === 'string') content = domify(content)
+  classes(content).add('hide')
+  if (this._closable) {
+    var close = domify('<a href="#" class="close">×</a>')
+    title.appendChild(close)
+  }
+  title.__target = content
+  this.header.appendChild(title)
+  this.body.appendChild(content)
+  return this
 }
 
 /**
@@ -100,42 +130,92 @@ Tabs.prototype.add = function(title, node) {
  */
 Tabs.prototype.active = function(el) {
   if (typeof el === 'string') {
-    el = this.header.querySelector(el);
+    el = this.header.querySelector(el)
   }
-  if (el === this._active) return;
-  var lis = this.header.childNodes;
+  if (!el || el === this._active) return
+  var hs = this.opts.headerSelector
+  var bs = this.opts.bodySelector
+  var lis = children(this.header, hs)
   for (var i = 0; i < lis.length; i++) {
-    classes(lis[i]).remove('active');
+    classes(lis[i]).remove('active')
   }
-  classes(el).add('active');
-  var nodes = this.body.childNodes;
+  classes(el).add('active')
+  var nodes = children(this.body, bs)
   for ( i = 0; i < nodes.length; i++) {
-    classes(nodes[i]).add('hide');
+    classes(nodes[i]).add('hide')
   }
-  classes(el.__target).remove('hide');
-  this._active = el;
-  this.emit('active', el);
+  classes(el.__target).remove('hide')
+  this._active = el
+  this.emit('active', el)
+  return this
 }
 
-Tabs.prototype._click = function (e) {
-  var el = e.target;
-  if (classes(el).has('close')) return;
-  e.stopPropagation();
-  this.active(el);
+/**
+ * click handler
+ *
+ * @private
+ * @param  {Event}  e
+ */
+Tabs.prototype.click = function (e) {
+  var el = e.delegateTarget
+  if (withIn(e.target, '.close', this.header)) return
+  e.stopPropagation()
+  this.active(el)
 }
 
-Tabs.prototype._close = function (e) {
-  var el = e.target;
-  e.preventDefault();
-  e.stopPropagation();
-  var li = el.parentNode;
-  var prev = li.previousElementSibling;
-  var next = li.nextElementSibling;
-  var target = li.__target;
-  target.parentNode.removeChild(target);
-  li.parentNode.removeChild(li);
-  if (this.body.childNodes.length === 0) return this.emit('empty');
-  if (this._active !== li) return;
-  if (prev) return this.active(prev);
-  if (next) return this.active(next);
+/**
+ * Remove title and coresspond content by close click
+ *
+ * @private
+ * @param  {Event}  e
+ */
+Tabs.prototype.close = function (e) {
+  e.preventDefault()
+  e.stopPropagation()
+  e.stopImmediatePropagation()
+  var el = e.delegateTarget.parentNode
+  var hs = this.opts.headerSelector
+  var bs = this.opts.bodySelector
+  var prev = traverse('previousSibling', el, hs, 1)[0]
+  var next = traverse('nextSibling', el, hs, 1)[0]
+  var target = el.__target
+  target.parentNode.removeChild(target)
+  el.parentNode.removeChild(el)
+  this.emit('remove', el, target)
+  var contents = children(this.body, bs)
+  if (contents.length === 0) return this.emit('empty')
+  if (this._active !== el) return
+  if (next) {
+    this.active(next)
+  }
+  else if (prev) {
+    this.active(prev)
+  }
+}
+
+/**
+ * withIn
+ *
+ * @param {Element} el
+ * @param {String} selector
+ * @param {Element} root
+ * @return {undefined}
+ */
+function withIn(el, selector, root) {
+  do {
+    if (matches(el, selector)) return true
+    if (el === root) return false
+    el = el.parentNode
+  } while(el)
+}
+
+function children(el, selector) {
+  var res = []
+  var children = el.children
+  for (var i = 0, l = children.length; i < l; i++) {
+    var node = children[i]
+    if (node.nodeType !== 1) continue
+    if (matches(node, selector)) res.push(node)
+  }
+  return res
 }

@@ -1,7 +1,7 @@
 {
   "name": "tab-component",
   "description": "Dynamic tabs component with add, remove and order support.",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "main": "index.js",
   "directories": {
     "example": "example",
@@ -12,14 +12,17 @@
     "closest": "component-closest",
     "emitter": "component-emitter",
     "events": "component-events",
-    "sortable": "sortable-component"
+    "matches-selector": "component-matches-selector",
+    "traverse": "yields-traverse"
   },
   "dependencies": {
     "component-classes": "^1.2.4",
     "component-emitter": "^1.2.0",
     "component-events": "^1.0.9",
+    "component-matches-selector": "^0.1.5",
     "domify": "^1.4.0",
-    "sortable-component": "^1.0.0"
+    "sweet-sortable": "^0.1.15",
+    "yields-traverse": "^0.2.0"
   },
   "scripts": {
     "test": "make test"
@@ -38,7 +41,7 @@
   "bugs": {
     "url": "https://github.com/chemzqm/tabs/issues"
   },
-  "style": "./tabs.css",
+  "style": "tabs.css",
   "homepage": "https://github.com/chemzqm/tabs#readme",
   "devDependencies": {
     "karma": "^0.13.10",
