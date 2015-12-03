@@ -38,10 +38,10 @@ __`tabs-header` and `tabs-body` is requried classes for header and body__
 ```js
 var Tabs = require('tabs')
 
-var parentNode = document.getElementById('tabs');
-var tabs = new Tabs(parentNode);
-tabs.closable();
-tabs.sortable();
+var parentNode = document.getElementById('tabs')
+var tabs = new Tabs(parentNode)
+tabs.closable()
+tabs.sortable()
 ```
 ## events
 
