@@ -6,9 +6,10 @@ test:
 
 doc:
 	@webpack example/index.js example/bundle.js
-	@rm -fr .gh-pages
 	@mkdir .gh-pages
 	@cp example/* .gh-pages
+	@cp tabs.css .gh-pages
+	@sed -i 's/..\/tabs/tabs/' .gh-pages/index.html
 	@ghp-import .gh-pages -n -p
 	@rm -fr .gh-pages
 
