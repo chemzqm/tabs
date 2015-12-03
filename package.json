@@ -21,7 +21,7 @@
     "component-events": "^1.0.9",
     "component-matches-selector": "^0.1.5",
     "domify": "^1.4.0",
-    "sweet-sortable": "^0.1.15",
+    "sweet-sortable": "^0.1.17",
     "yields-traverse": "^0.2.0"
   },
   "scripts": {
