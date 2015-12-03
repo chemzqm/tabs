@@ -14,7 +14,6 @@ ul.tabs-header:after {
 }
 
 ul.tabs-header li {
-  position: relative;
   list-style: none;
   float: left;
   margin-bottom: -1px;
@@ -29,6 +28,7 @@ ul.tabs-header li {
   background-color: #FFF;
   border: 1px solid rgba(0, 0, 0, 0);
   background: rgba(0, 0, 0, 0);
+  transition: background-color 0.2s linear;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -59,8 +59,8 @@ ul.tabs-header li .close:hover {
 }
 ul.tabs-header li:hover,
 ul.tabs-header li:focus {
-  border-color: #EEE #EEE #DDD;
-  background-color: #EEE;
+  border-color: #f5f5f5 #f5f5f5 #DDD;
+  background-color: #f5f5f5;
 }
 ul.tabs-header li.active {
   color: #555;
