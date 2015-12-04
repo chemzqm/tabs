@@ -1332,7 +1332,7 @@
 	  if (this.mouseStart == null) return
 	  if (e.changedTouches && e.changedTouches.length !== 1) return
 	  var node = this.findDelegate(e)
-	  if (!node || node != this.dragEl) return
+	  if (!node || node != this.dragEl) return this.reset()
 	  e.preventDefault()
 	  e.stopPropagation()
 	  var touch = util.getTouch(e)
