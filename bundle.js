@@ -84,6 +84,7 @@
 	var Sortable = __webpack_require__(12)
 	var traverse = __webpack_require__(33)
 	var matches = __webpack_require__(35)
+	var sw = __webpack_require__(37)
 
 	/**
 	 * Exports.
@@ -118,6 +119,7 @@
 	  for (var i = 0, len = titles.length; i < len; i++) {
 	    var item = titles[i]
 	    item.__target = contents[i]
+	    classes(contents[i]).add('hide')
 	  }
 	  this.events = events(this.header, this)
 	  this.events.bind('click .close', 'close')
@@ -203,19 +205,19 @@
 	  if (typeof el === 'string') {
 	    el = this.header.querySelector(el)
 	  }
-	  if (!el || el === this._active) return
-	  var hs = this.opts.headerSelector
-	  var bs = this.opts.bodySelector
-	  var lis = children(this.header, hs)
-	  for (var i = 0; i < lis.length; i++) {
-	    classes(lis[i]).remove('active')
+	  var target = el.__target
+	  if (!el || !target || el === this._active) return
+	  if (!this._active) {
+	    classes(el).add('active')
+	    classes(target).remove('hide')
+	  } else {
+	    sw(el, this._active, {
+	      className: 'active'
+	    })
+	    sw(target, this._active.__target, {
+	      className: 'hide'
+	    })
 	  }
-	  classes(el).add('active')
-	  var nodes = children(this.body, bs)
-	  for ( i = 0; i < nodes.length; i++) {
-	    classes(nodes[i]).add('hide')
-	  }
-	  classes(el.__target).remove('hide')
 	  this._active = el
 	  this.emit('active', el)
 	  return this
@@ -3048,6 +3050,293 @@
 	  exports.all = obj.all;
 	  return exports;
 	};
+
+
+/***/ },
+/* 37 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var classes = __webpack_require__(38)
+	var computedStyle = __webpack_require__(40)
+
+	module.exports = function (first, second, opt) {
+	  for (var k in opt) {
+	    var prop = opt[k]
+	    switch (k) {
+	      case 'style':
+	        switchStyle(first, second, prop)
+	        break;
+	      case 'className':
+	        switchClasses(first, second, prop)
+	        break;
+	      case 'property':
+	        switchProperty(first, second, prop)
+	        break;
+	      default:
+	        throw new Error('unknown option property [' + k + ']')
+	    }
+	  }
+	}
+
+	function switchStyle(first, second, prop) {
+	  var tmp = computedStyle(second, prop)
+	  second.style[prop] = computedStyle(first, prop)
+	  first.style[prop] = tmp
+	}
+
+	function switchClasses(first, second, name) {
+	  if (classes(first).has(name)) {
+	    classes(first).remove(name)
+	    classes(second).add(name)
+	  } else {
+	    classes(second).remove(name)
+	    classes(first).add(name)
+	  }
+	}
+
+	function switchProperty(first, second, prop) {
+	  var tmp = second[prop]
+	  second[prop] = first[prop]
+	  first[prop] = tmp
+	}
+
+
+/***/ },
+/* 38 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Module dependencies.
+	 */
+
+	var index = __webpack_require__(39);
+
+	/**
+	 * Whitespace regexp.
+	 */
+
+	var re = /\s+/;
+
+	/**
+	 * toString reference.
+	 */
+
+	var toString = Object.prototype.toString;
+
+	/**
+	 * Wrap `el` in a `ClassList`.
+	 *
+	 * @param {Element} el
+	 * @return {ClassList}
+	 * @api public
+	 */
+
+	module.exports = function(el){
+	  return new ClassList(el);
+	};
+
+	/**
+	 * Initialize a new ClassList for `el`.
+	 *
+	 * @param {Element} el
+	 * @api private
+	 */
+
+	function ClassList(el) {
+	  if (!el || !el.nodeType) {
+	    throw new Error('A DOM element reference is required');
+	  }
+	  this.el = el;
+	  this.list = el.classList;
+	}
+
+	/**
+	 * Add class `name` if not already present.
+	 *
+	 * @param {String} name
+	 * @return {ClassList}
+	 * @api public
+	 */
+
+	ClassList.prototype.add = function(name){
+	  // classList
+	  if (this.list) {
+	    this.list.add(name);
+	    return this;
+	  }
+
+	  // fallback
+	  var arr = this.array();
+	  var i = index(arr, name);
+	  if (!~i) arr.push(name);
+	  this.el.className = arr.join(' ');
+	  return this;
+	};
+
+	/**
+	 * Remove class `name` when present, or
+	 * pass a regular expression to remove
+	 * any which match.
+	 *
+	 * @param {String|RegExp} name
+	 * @return {ClassList}
+	 * @api public
+	 */
+
+	ClassList.prototype.remove = function(name){
+	  if ('[object RegExp]' == toString.call(name)) {
+	    return this.removeMatching(name);
+	  }
+
+	  // classList
+	  if (this.list) {
+	    this.list.remove(name);
+	    return this;
+	  }
+
+	  // fallback
+	  var arr = this.array();
+	  var i = index(arr, name);
+	  if (~i) arr.splice(i, 1);
+	  this.el.className = arr.join(' ');
+	  return this;
+	};
+
+	/**
+	 * Remove all classes matching `re`.
+	 *
+	 * @param {RegExp} re
+	 * @return {ClassList}
+	 * @api private
+	 */
+
+	ClassList.prototype.removeMatching = function(re){
+	  var arr = this.array();
+	  for (var i = 0; i < arr.length; i++) {
+	    if (re.test(arr[i])) {
+	      this.remove(arr[i]);
+	    }
+	  }
+	  return this;
+	};
+
+	/**
+	 * Toggle class `name`, can force state via `force`.
+	 *
+	 * For browsers that support classList, but do not support `force` yet,
+	 * the mistake will be detected and corrected.
+	 *
+	 * @param {String} name
+	 * @param {Boolean} force
+	 * @return {ClassList}
+	 * @api public
+	 */
+
+	ClassList.prototype.toggle = function(name, force){
+	  // classList
+	  if (this.list) {
+	    if ("undefined" !== typeof force) {
+	      if (force !== this.list.toggle(name, force)) {
+	        this.list.toggle(name); // toggle again to correct
+	      }
+	    } else {
+	      this.list.toggle(name);
+	    }
+	    return this;
+	  }
+
+	  // fallback
+	  if ("undefined" !== typeof force) {
+	    if (!force) {
+	      this.remove(name);
+	    } else {
+	      this.add(name);
+	    }
+	  } else {
+	    if (this.has(name)) {
+	      this.remove(name);
+	    } else {
+	      this.add(name);
+	    }
+	  }
+
+	  return this;
+	};
+
+	/**
+	 * Return an array of classes.
+	 *
+	 * @return {Array}
+	 * @api public
+	 */
+
+	ClassList.prototype.array = function(){
+	  var className = this.el.getAttribute('class') || '';
+	  var str = className.replace(/^\s+|\s+$/g, '');
+	  var arr = str.split(re);
+	  if ('' === arr[0]) arr.shift();
+	  return arr;
+	};
+
+	/**
+	 * Check if class `name` is present.
+	 *
+	 * @param {String} name
+	 * @return {ClassList}
+	 * @api public
+	 */
+
+	ClassList.prototype.has =
+	ClassList.prototype.contains = function(name){
+	  return this.list
+	    ? this.list.contains(name)
+	    : !! ~index(this.array(), name);
+	};
+
+
+/***/ },
+/* 39 */
+/***/ function(module, exports) {
+
+	module.exports = function(arr, obj){
+	  if (arr.indexOf) return arr.indexOf(obj);
+	  for (var i = 0; i < arr.length; ++i) {
+	    if (arr[i] === obj) return i;
+	  }
+	  return -1;
+	};
+
+/***/ },
+/* 40 */
+/***/ function(module, exports) {
+
+	// DEV: We don't use var but favor parameters since these play nicer with minification
+	function computedStyle(el, prop, getComputedStyle, style) {
+	  getComputedStyle = window.getComputedStyle;
+	  style =
+	      // If we have getComputedStyle
+	      getComputedStyle ?
+	        // Query it
+	        // TODO: From CSS-Query notes, we might need (node, null) for FF
+	        getComputedStyle(el) :
+
+	      // Otherwise, we are in IE and use currentStyle
+	        el.currentStyle;
+	  if (style) {
+	    return style
+	    [
+	      // Switch to camelCase for CSSOM
+	      // DEV: Grabbed from jQuery
+	      // https://github.com/jquery/jquery/blob/1.9-stable/src/css.js#L191-L194
+	      // https://github.com/jquery/jquery/blob/1.9-stable/src/core.js#L593-L597
+	      prop.replace(/-(\w)/gi, function (word, letter) {
+	        return letter.toUpperCase();
+	      })
+	    ];
+	  }
+	}
+
+	module.exports = computedStyle;
 
 
 /***/ }
