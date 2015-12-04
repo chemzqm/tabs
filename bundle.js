@@ -151,7 +151,6 @@
 	    var close = domify('<a href="#" class="close">×</a>')
 	    titles[i].appendChild(close)
 	  }
-	  return this
 	}
 
 	/**
@@ -193,7 +192,6 @@
 	  title.__target = content
 	  this.header.appendChild(title)
 	  this.body.appendChild(content)
-	  return this
 	}
 
 	/**
@@ -220,7 +218,6 @@
 	  }
 	  this._active = el
 	  this.emit('active', el)
-	  return this
 	}
 
 	/**
