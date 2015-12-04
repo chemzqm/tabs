@@ -13,6 +13,7 @@ var classes = require('classes')
 var Sortable = require('sweet-sortable')
 var traverse = require('traverse')
 var matches = require('matches-selector')
+var sw = require('switch')
 
 /**
  * Exports.
@@ -47,6 +48,7 @@ function Tabs (parentNode, opts) {
   for (var i = 0, len = titles.length; i < len; i++) {
     var item = titles[i]
     item.__target = contents[i]
+    classes(contents[i]).add('hide')
   }
   this.events = events(this.header, this)
   this.events.bind('click .close', 'close')
@@ -132,19 +134,19 @@ Tabs.prototype.active = function(el) {
   if (typeof el === 'string') {
     el = this.header.querySelector(el)
   }
-  if (!el || el === this._active) return
-  var hs = this.opts.headerSelector
-  var bs = this.opts.bodySelector
-  var lis = children(this.header, hs)
-  for (var i = 0; i < lis.length; i++) {
-    classes(lis[i]).remove('active')
+  var target = el.__target
+  if (!el || !target || el === this._active) return
+  if (!this._active) {
+    classes(el).add('active')
+    classes(target).remove('hide')
+  } else {
+    sw(el, this._active, {
+      className: 'active'
+    })
+    sw(target, this._active.__target, {
+      className: 'hide'
+    })
   }
-  classes(el).add('active')
-  var nodes = children(this.body, bs)
-  for ( i = 0; i < nodes.length; i++) {
-    classes(nodes[i]).add('hide')
-  }
-  classes(el.__target).remove('hide')
   this._active = el
   this.emit('active', el)
   return this

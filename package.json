@@ -13,7 +13,8 @@
     "emitter": "component-emitter",
     "events": "component-events",
     "matches-selector": "component-matches-selector",
-    "traverse": "yields-traverse"
+    "traverse": "yields-traverse",
+    "switch": "switch-component"
   },
   "dependencies": {
     "component-classes": "^1.2.4",
@@ -22,6 +23,7 @@
     "component-matches-selector": "^0.1.5",
     "domify": "^1.4.0",
     "sweet-sortable": "^0.1.17",
+    "switch-component": "0.0.1",
     "yields-traverse": "^0.2.0"
   },
   "scripts": {
