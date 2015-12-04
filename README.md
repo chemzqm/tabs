@@ -33,7 +33,7 @@ or
 </div>
 ```
 
-__`tabs-header` and `tabs-body` is requried classes for header and body__
+`tabs-header` and `tabs-body` is requried classes for header and body
 
 ```js
 var Tabs = require('tabs')
@@ -52,9 +52,13 @@ tabs.sortable()
 
 ## API
 
-### new Tabs(parentNode)
+### new Tabs(parentNode, [opts])
 
-Init tabs inside parent node.
+Init tabs inside parentNode and optional `opts`, direct children of `tabs-header` and `tabs-body`
+matches selector are used as header item and body items
+
+* `opts.headerSelector` selector for header item default `li`
+* `opts.bodySelector` selector for body items default `div`
 
 ### .closable()
 
