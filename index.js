@@ -80,7 +80,6 @@ Tabs.prototype.closable = function() {
     var close = domify('<a href="#" class="close">×</a>')
     titles[i].appendChild(close)
   }
-  return this
 }
 
 /**
@@ -122,7 +121,6 @@ Tabs.prototype.add = function(title, content) {
   title.__target = content
   this.header.appendChild(title)
   this.body.appendChild(content)
-  return this
 }
 
 /**
@@ -149,7 +147,6 @@ Tabs.prototype.active = function(el) {
   }
   this._active = el
   this.emit('active', el)
-  return this
 }
 
 /**
