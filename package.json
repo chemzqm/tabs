@@ -22,7 +22,7 @@
     "component-events": "^1.0.9",
     "component-matches-selector": "^0.1.5",
     "domify": "^1.4.0",
-    "sweet-sortable": "^0.1.18",
+    "sweet-sortable": "^0.1.19",
     "switch-component": "0.0.1",
     "yields-traverse": "^0.2.0"
   },
