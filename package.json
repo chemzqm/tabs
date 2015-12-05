@@ -1,7 +1,7 @@
 {
   "name": "tab-component",
   "description": "Dynamic tabs component with add, remove and order support.",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "main": "index.js",
   "directories": {
     "example": "example",
@@ -22,8 +22,8 @@
     "component-events": "^1.0.9",
     "component-matches-selector": "^0.1.5",
     "domify": "^1.4.0",
-    "sweet-sortable": "^0.1.20",
-    "switch-component": "0.0.1",
+    "sweet-sortable": "^0.3.0",
+    "switch-component": "0.0.2",
     "yields-traverse": "^0.2.0"
   },
   "scripts": {
